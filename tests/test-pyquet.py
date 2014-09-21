@@ -17,11 +17,11 @@ class TestClasses(TestCase):
     def test_deck(self):
         d = Deck()
         self.assertEquals(len(d.cards), 32)
-        self.assertEquals(len([c for c in d.cards if str(c) == 'Ace ♧']), 1)
+        self.assertEquals(len([c for c in d.cards if str(c) == 'Ace♧']), 1)
 
     def test_point(self):
         p = Player('Marcus')
-        p.hand = [
+        p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
             Card(Rank.King, Suit.HEARTS),
@@ -37,13 +37,14 @@ class TestClasses(TestCase):
             Card(Rank.Queen, Suit.CLUBS),
             Card(Rank.Eight, Suit.CLUBS),
             Card(Rank.Jack, Suit.CLUBS),
-        ]
+        ])
 
         point = p.point
         self.assertEquals(point[0], 4)
         self.assertEquals(point[1], 41)
 
-        p.hand = [
+        p.hand = {}
+        p.draw([
             Card(Rank.Seven, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
             Card(Rank.King, Suit.HEARTS),
@@ -59,7 +60,7 @@ class TestClasses(TestCase):
             Card(Rank.Queen, Suit.CLUBS),
             Card(Rank.Eight, Suit.CLUBS),
             Card(Rank.Jack, Suit.CLUBS),
-        ]
+        ])
 
         point = p.point
         self.assertEquals(point[0], 4)
@@ -67,7 +68,7 @@ class TestClasses(TestCase):
 
     def test_sequences(self):
         p = Player('Marcus')
-        p.hand = [
+        p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
             Card(Rank.King, Suit.HEARTS),
@@ -83,7 +84,7 @@ class TestClasses(TestCase):
             Card(Rank.Queen, Suit.CLUBS),
             Card(Rank.Eight, Suit.CLUBS),
             Card(Rank.Jack, Suit.CLUBS),
-        ]
+        ])
         sequences = p.sequences
         run = [
             Card(Rank.Ten, Suit.HEARTS),
@@ -95,7 +96,7 @@ class TestClasses(TestCase):
 
     def test_sets(self):
         p = Player('Marcus')
-        p.hand = [
+        p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
             Card(Rank.King, Suit.HEARTS),
@@ -111,7 +112,7 @@ class TestClasses(TestCase):
             Card(Rank.Queen, Suit.CLUBS),
             Card(Rank.Eight, Suit.CLUBS),
             Card(Rank.King, Suit.CLUBS),
-        ]
+        ])
         sets = [[
             Card(Rank.King, Suit.HEARTS),
             Card(Rank.King, Suit.SPADES),
@@ -138,11 +139,11 @@ class TestClasses(TestCase):
 
         d.deal()
 
-        elder_exchange = d.elder.hand[0:5]
+        elder_exchange = list(d.elder.hand.values())[0:5]
 
         d.exchange(d.elder, elder_exchange)
 
-        younger_exchange = d.younger.hand[0:3]
+        younger_exchange = list(d.younger.hand.values())[0:3]
 
         d.exchange(d.younger, younger_exchange)
 

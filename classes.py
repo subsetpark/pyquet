@@ -1,5 +1,5 @@
 from enum import Enum
-from random import shuffle
+from random import shuffle, choice
 
 class Rank(Enum):
     Seven = 7
@@ -35,7 +35,7 @@ class Card:
         self.suit = suit
 
     def __str__(self):
-        return "{} {}".format(self.rank.name, self.suit.capitalize())
+        return "{}{}".format(self.rank.name, self.suit.capitalize())
 
     def __repr__(self):
         return str(self)
@@ -49,29 +49,62 @@ class Card:
     def __sub__(self, other):
         return self.rank.value - other.rank.value
 
+    def hash(self):
+        CHARMAP = {
+            Rank.Seven: '7',
+            Rank.Eight: '8',
+            Rank.Nine: '9',
+            Rank.Ten: 'T',
+            Rank.Jack: 'J',
+            Rank.Queen: 'Q',
+            Rank.King: 'K',
+            Rank.Ace: 'A',
+            Suit.DIAMONDS: 'D',
+            Suit.HEARTS: 'H',
+            Suit.SPADES: 'S',
+            Suit.CLUBS: 'C'
+        }
+        return '{}{}'.format(CHARMAP[self.rank], CHARMAP[self.suit])
+
 class Deck:
     def __init__(self):
         self.cards = [Card(r, s) for r in Rank for s in Suit.suits]
         shuffle(self.cards)
 
-    def draw(self, player):
-        player.hand.append(self.cards.pop())
-
     def __len__(self):
         return len(self.cards)
 
+    def pop(self):
+        return self.cards.pop()
+
 class Player:
     def __init__(self, name):
-        self.hand = []
+        self.hand = {}
         self.name = name
         self.discards = []
+
+        self.score = 0
+        self.deal_score = None
 
     def __repr__(self):
         return 'Player: {}'.format(self.name)
 
     def suits(self):
-        return sorted([[c for c in self.hand if c.suit == s] for s in Suit.suits], 
+        return sorted([[c for c in self.hand.values() if c.suit == s] for s in Suit.suits], 
                       key=len)
+
+    def print_hand(self):
+        cards = sorted(self.hand.values(), key=lambda c: (c.suit, c.rank.value))
+        return " | ".join([str(c) for c in cards])
+
+    def discard(self, cards):
+        for card in cards:
+            del self.hand[card.hash()]
+            self.discards.append(card)
+
+    def draw(self, cards):
+        for card in cards:
+            self.hand[card.hash()] = card
 
     @property
     def point(self):
@@ -138,15 +171,11 @@ class Player:
             Rank.Ten
         ]
         return sorted([l for l in 
-                       [[c for c in self.hand if c.rank == r] 
+                       [[c for c in self.hand.values() if c.rank == r] 
                            for r in ELIGIBLE_RANKS] 
                         if len(l) >= 3],
                       key=lambda l: (len(l), l[0].rank))
 
-    def discard(self, cards):
-        for card in cards:
-            self.hand.remove(card)
-            self.discards.append(card)
 
 class Deal:
     def __init__(self, elder, younger):
@@ -154,20 +183,28 @@ class Deal:
         self.elder = elder
         self.younger = younger
 
+    def get_cards(self, message, player, max_cards=1):
+        card_str = input("Your hand: {}\n{}".format(player.print_hand(), message))
+        cards = card_str.split()
+        return [player.hand[chars] for chars in cards]
+
     def deal(self):
         for i in range(12):
-            self.deck.draw(self.elder)
-            self.deck.draw(self.younger)
+            self.elder.draw([self.deck.pop()])
+            self.younger.draw([self.deck.pop()])
 
     def exchange(self, player, cards):
         player.discard(cards)
         for i in cards:
-            self.deck.draw(player)
-        
+            player.draw([self.deck.pop()])
 
 class Partie:
     def __init__(self, player1_name, player2_name):
         self.player1 = Player(player1_name)
         self.player2 = Player(player2_name)
-        for i in range(6):
-            Hand().play()
+        self.deals = []
+
+    def play(self):
+        players = {self.player1, self.player2}
+        dealer = random.choice(list(players))
+        non_dealer = players - {dealer}
