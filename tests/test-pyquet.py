@@ -127,12 +127,16 @@ class TestClasses(TestCase):
         ]
         self.assertEquals(p.sets, sets)
 
-    def test_deal(self):
+    def test_deal_deal(self):
         d = new_deal()
 
         d.deal()
         assert len(d.elder.hand) == len(d.younger.hand) == 12
         self.assertEquals(len(d.deck.cards), 8)
+
+    def test_deal_play(self):
+        d = new_deal()
+        d.play()
 
     def test_exchange(self):
         d = new_deal()

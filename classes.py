@@ -29,6 +29,11 @@ class Suit:
     CLUBS = '♧'
     suits = [DIAMONDS, HEARTS, SPADES, CLUBS]
 
+class Declaration:
+    GOOD = 'good'
+    EQUAL = 'equal'
+    NOT_GOOD = 'not good'
+
 class Card:
     def __init__(self, rank, suit):
         self.rank = rank
@@ -158,9 +163,10 @@ class Player:
                 
             sequences.append(longest_sequence)
 
-        return sorted([sequence for sequence in sequences if len(sequence) >= 3],
-                      key=len)
-
+        sequences = sorted([sequence for sequence in sequences if len(sequence) >= 3],
+                            key=lambda l: (len(l), -l[0].rank.value))
+        max_length = len(sequences[0]) if sequences else 0
+        return (max_length, sequences)
     @property
     def sets(self):
         ELIGIBLE_RANKS = [
@@ -170,11 +176,13 @@ class Player:
             Rank.Jack,
             Rank.Ten
         ]
-        return sorted([l for l in 
+        sets = sorted([l for l in 
                        [[c for c in self.hand.values() if c.rank == r] 
                            for r in ELIGIBLE_RANKS] 
                         if len(l) >= 3],
-                      key=lambda l: (len(l), l[0].rank))
+                      key=lambda l: (len(l), -l[0].rank.value))
+        set_class = len(sets[0]) if sets else 0
+        return (set_class, sets)
 
 
 class Deal:
@@ -182,11 +190,9 @@ class Deal:
         self.deck = Deck()
         self.elder = elder
         self.younger = younger
-
-    def get_cards(self, message, player, max_cards=1):
-        card_str = input("Your hand: {}\n{}".format(player.print_hand(), message))
-        cards = card_str.split()
-        return [player.hand[chars] for chars in cards]
+        self.point_winner = None
+        self.sequences_winner = None
+        self.sets_winner = None
 
     def deal(self):
         for i in range(12):
@@ -197,14 +203,19 @@ class Deal:
         player.discard(cards)
         for i in cards:
             player.draw([self.deck.pop()])
+        
 
 class Partie:
-    def __init__(self, player1_name, player2_name):
-        self.player1 = Player(player1_name)
-        self.player2 = Player(player2_name)
+    def __init__(self, player1, player2):
+        players = {player1, player2}
+        self.dealer = choice(list(players))
+        self.non_dealer = (players - {self.dealer}).pop()
         self.deals = []
 
-    def play(self):
-        players = {self.player1, self.player2}
-        dealer = random.choice(list(players))
-        non_dealer = players - {dealer}
+    def new_deal(self):
+        if len(self.deals) == 0 or len(self.deals) % 2 == 0:
+            d = Deal(self.non_dealer, self.dealer)
+        elif len(self.deals) % 2 == 1:
+            d = Deal(self.dealer, self.non_dealer)
+        self.deals.append(d)
+        return d
