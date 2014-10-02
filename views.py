@@ -24,7 +24,7 @@ class Client:
         elder = deal.elder
         younger = deal.younger
 
-        winners = {'point': None, 'sequences': None, 'sets': None}
+        winners = {'point': {}, 'sequences': {}, 'sets': {}}
         
         for attr in ('point', 'sequences', 'sets'):
             elder_value = getattr(elder, attr)
@@ -41,6 +41,7 @@ class Client:
             print("That's {}.".format(value))
 
             if value == Declaration.EQUAL:
+                winners[attr]['equal'] = True
                 if elder_value[1] > younger_value[1]:
                     value = Declaration.GOOD
                 elif elder_value[1] == younger_value[1]:
@@ -52,9 +53,9 @@ class Client:
                 print("That's {}.".format(value))
 
             if value == Declaration.GOOD:
-                winners[attr] = elder
+                winners[attr]['winner'] = elder
             elif value == Declaration.NOT_GOOD:
-                winners[attr] = younger
+                winners[attr]['winner'] = younger
 
         return winners
 
@@ -74,7 +75,7 @@ class Client:
         d.exchange(younger, younger_exchange)
 
         declarations_winners = self.declarations(d)
-
-        for attr, winner in declarations_winners.values():
-            if winner == younger:
-                print "Younger wins {} with {}".format(attr, getattr(younger, attr))
+        for attr, result in declarations_winners.items():
+            if result.get('winner') == younger:
+                attr_level = 1 if declarations_winners[attr].get('equal') else 0
+                print("Younger wins {} with {}.".format(attr, getattr(younger, attr)[attr_level]))

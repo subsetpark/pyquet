@@ -123,7 +123,7 @@ class Player:
         max_length = len(suits[-1])
         
         if max_length < 4:
-            return None
+            return (0, 0)
 
         point_suits = [suit for suit in suits if len(suit) == max_length]
 
