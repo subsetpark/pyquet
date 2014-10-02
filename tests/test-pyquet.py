@@ -92,7 +92,7 @@ class TestClasses(TestCase):
             Card(Rank.Queen, Suit.HEARTS),
             Card(Rank.King, Suit.HEARTS),
         ]
-        self.assertEquals(sequences[-1], run)
+        self.assertEquals(sequences[1][-1], run)
 
     def test_sets(self):
         p = Player('Marcus')
@@ -125,7 +125,7 @@ class TestClasses(TestCase):
                 Card(Rank.Queen, Suit.CLUBS),
             ]
         ]
-        self.assertEquals(p.sets, sets)
+        self.assertEquals(p.sets, (3, sets))
 
     def test_deal_deal(self):
         d = new_deal()
@@ -133,10 +133,6 @@ class TestClasses(TestCase):
         d.deal()
         assert len(d.elder.hand) == len(d.younger.hand) == 12
         self.assertEquals(len(d.deck.cards), 8)
-
-    def test_deal_play(self):
-        d = new_deal()
-        d.play()
 
     def test_exchange(self):
         d = new_deal()
