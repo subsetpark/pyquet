@@ -74,3 +74,7 @@ class Client:
         d.exchange(younger, younger_exchange)
 
         declarations_winners = self.declarations(d)
+
+        for attr, winner in declarations_winners.values():
+            if winner == younger:
+                print "Younger wins {} with {}".format(attr, getattr(younger, attr))
