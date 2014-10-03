@@ -1,6 +1,5 @@
 from enum import Enum
 from random import shuffle, choice
-from collections import namedtuple
 
 class Rank(Enum):
     Seven = 7
@@ -209,9 +208,6 @@ class Deal:
         self.deck = Deck()
         self.elder = elder
         self.younger = younger
-        self.point_winner = None
-        self.sequences_winner = None
-        self.sets_winner = None
         self.players = {self.elder, self.younger}
         self.score = {self.elder: 0, self.younger: 0}
         self.tricks = {self.elder: 0, self.younger: 0}

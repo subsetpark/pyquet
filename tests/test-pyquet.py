@@ -40,8 +40,8 @@ class TestClasses(TestCase):
         ])
 
         point = p.point
-        self.assertEquals(point[0], 4)
-        self.assertEquals(point[1], 41)
+        self.assertEquals(point.score, 4)
+        self.assertEquals(point.value, 41)
 
         p.hand = {}
         p.draw([
@@ -63,8 +63,8 @@ class TestClasses(TestCase):
         ])
 
         point = p.point
-        self.assertEquals(point[0], 4)
-        self.assertEquals(point[1], 37)
+        self.assertEquals(point.score, 4)
+        self.assertEquals(point.value, 37)
 
     def test_sequences(self):
         p = Player('Marcus')
@@ -85,14 +85,13 @@ class TestClasses(TestCase):
             Card(Rank.Eight, Suit.CLUBS),
             Card(Rank.Jack, Suit.CLUBS),
         ])
-        sequences = p.sequences
         run = [
             Card(Rank.Ten, Suit.HEARTS),
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Queen, Suit.HEARTS),
             Card(Rank.King, Suit.HEARTS),
         ]
-        self.assertEquals(sequences[1][-1], run)
+        self.assertEquals(p.sequences, p.Result(p, 4, [run]))
 
     def test_sets(self):
         p = Player('Marcus')
@@ -113,19 +112,19 @@ class TestClasses(TestCase):
             Card(Rank.Eight, Suit.CLUBS),
             Card(Rank.King, Suit.CLUBS),
         ])
-        sets = [[
-            Card(Rank.King, Suit.HEARTS),
-            Card(Rank.King, Suit.SPADES),
-            Card(Rank.King, Suit.CLUBS)
-            ],
+        sets = [
             [
+                Card(Rank.Queen, Suit.DIAMONDS),
                 Card(Rank.Queen, Suit.HEARTS),
                 Card(Rank.Queen, Suit.SPADES),
-                Card(Rank.Queen, Suit.DIAMONDS),
                 Card(Rank.Queen, Suit.CLUBS),
+            ],[
+                Card(Rank.King, Suit.HEARTS),
+                Card(Rank.King, Suit.SPADES),
+                Card(Rank.King, Suit.CLUBS)
             ]
         ]
-        self.assertEquals(p.sets, (3, sets))
+        self.assertEquals(p.sets, p.Result(p, 4, sets))
 
     def test_deal_deal(self):
         d = new_deal()
@@ -149,4 +148,4 @@ class TestClasses(TestCase):
 
         assert len(d.elder.hand) == len(d.younger.hand) == 12
         self.assertEquals(len(d.deck.cards), 0)
-        self.assertEquals(len(d.elder.discards + d.younger.discards), 8)
+        self.assertEquals(len(d.discards[d.elder] + d.discards[d.younger]), 8)
