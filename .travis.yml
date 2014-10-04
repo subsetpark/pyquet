@@ -1,6 +1,7 @@
 language: python
 python:
     - "3.4"
-
-script: nosetests
-
+install:
+    - pip install coveralls
+script: 
+    - nosetests --with-coverage
