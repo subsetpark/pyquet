@@ -86,6 +86,7 @@ class Server:
         deal.score_declarations()
         if deal.repique:
             self.announce('{} is repique.'.format(deal.repique))
+        self.announce(self.deal.score)
 
     def tricks(self, deal):
         lead = deal.elder
@@ -134,7 +135,7 @@ class Server:
         
         winner = self.partie.winner
         loser = self.partie.loser
-        
+
         if self.partie.score[loser] >= 100:
             self.announce('{} crossed the rubicon and {} won with {}.'.format(loser, winner, final_score))
         else:
