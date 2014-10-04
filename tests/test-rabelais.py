@@ -1,6 +1,6 @@
 from unittest import TestCase
-from pyquet.game import Deck, Deal, Player, Rank, Suit, Card, Partie
-from pyquet.players import Rabelais
+from core.game import Deck, Deal, Player, Rank, Suit, Card, Partie
+from core.players import Rabelais
 
 def new_deal():
     p1 = Rabelais('Marcus')

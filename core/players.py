@@ -1,28 +1,51 @@
-from pyquet.game import Rank, Player, Category, Deck
+from core.game import Good, Rank, Player, Category, Deck, all_cards, Declaration
 
 class HumanPlayer(Player):
-    def get_cards(self, message, max_cards=1):
-        card_str = input("\n{}\nYour hand: {}\n".format(message, self.print_hand()))
-        cards = card_str.split()
+    def announce(self, message):
+        print(message)
 
-        if len(cards) > max_cards:
-            print("You may draw up to {} cards".format(max_cards))
-            return self.get_cards(message, max_cards)
+    def get_cards(self, message, min=1, max=1):
+        card_str = input("\n{}\nYour hand:\n{}\n".format(message, self.print_hand()))
+        cards = [string.upper() for string in card_str.split()]
+
+        if len(cards) > max:
+            print("You may draw up to {} cards".format(max))
+            return self.get_cards(message, min, max)
 
         if len(set(cards)) != len(cards):
             print("Please select up to {} unique cards.")
-            return self.get_cards(message, max_cards)
+            return self.get_cards(message, min, max)
+
+        if len(cards) < min:
+            print("Please select at least {} cards.".format(min))
+            return self.get_cards(message, min, max)
 
         try:
             return [self.hand[chars] for chars in cards]
         except KeyError:
-            return self.get_cards(message, max_cards)
+            return self.get_cards(message, max)
     
     def get_elder_exchange(self):
-        return self.get_cards('{}, please exchange up to five cards.'.format(self))
+        return self.get_cards('{}, please exchange up to five cards.'.format(self), min=0, max=5)
 
     def get_younger_exchange(self, max_cards):
-        return self.get_cards('{}, please exchange up to {} cards.'.format(self, max_cards), max_cards)
+        return self.get_cards('{}, please exchange up to {} cards.'.format(self, max_cards), min=0, max=max_cards)
+
+    def get_good(self, declaration):
+        # This can be where you can sink eventually
+        my_score = getattr(self, declaration.category)
+        if not declaration.value:
+            detail = 'score'
+        else:
+            detail = 'value'
+
+        if getattr(declaration, detail) > getattr(my_score, detail):
+            good = Good.GOOD
+        elif getattr(declaration, detail) == getattr(my_score, detail):
+            good = Good.EQUAL
+        else:
+            good = Good.NOT_GOOD
+        return good
 
     def get_lead(self):
         return self.get_cards('\n{}, please lead.'.format(self))[0]
@@ -42,7 +65,11 @@ class Rabelais(Player):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.unseen_cards = set(Deck().cards)
+        self.unseen_cards = set()
+
+    def reset(self):
+        super().reset()
+        self.unseen_cards = set(self.deal.pool)
 
     SCORE_VALUES = {
         Category.POINT: {
@@ -68,6 +95,8 @@ class Rabelais(Player):
             4: 14
         }
     }
+    def announce(self, message):
+        pass
 
     def card_sort(self, cards):
         return sorted(list(cards), key=lambda x:(x.suit, x.rank.value))
@@ -119,6 +148,24 @@ class Rabelais(Player):
 
         return sorted(list(remainder), key=lambda x:x.rank.value)[:max_cards]
 
+    def get_declaration(self, category, detail=False):
+        return Declaration(getattr(self, category), detail)
+
+    def get_good(self, declaration):
+        my_score = getattr(self, declaration.category)
+        if not declaration.value:
+            detail = 'score'
+        else:
+            detail = 'value'
+
+        if getattr(declaration, detail) > getattr(my_score, detail):
+            good = Good.GOOD
+        elif getattr(declaration, detail) == getattr(my_score, detail):
+            good = Good.EQUAL
+        else:
+            good = Good.NOT_GOOD
+        return good
+
     def get_lead(self):
         return self.suits()[-1][-1]
 
@@ -136,7 +183,8 @@ class Rabelais(Player):
     def draw(self, cards):
         for card in cards:
             self.hand[card.hash()] = card
-            self.register(self, card)
+            self.unseen_cards.remove(card)
 
     def register(self, player, card, silent=True):
-        self.unseen_cards.remove(card)
+        if player != self:
+            self.unseen_cards.remove(card)

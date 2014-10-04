@@ -1,6 +1,6 @@
 from unittest import TestCase
-from pyquet.game import Partie, Deck, Deal, Rank, Suit, Card
-from pyquet.players import Rabelais
+from core.game import Partie, Deck, Deal, Rank, Suit, Card, all_cards
+from core.players import Rabelais
 
 def new_deal():
     p1 = Rabelais('Marcus')
@@ -16,11 +16,18 @@ class TestClasses(TestCase):
 
         self.assertGreater(ace_diamonds, king_clubs)
         self.assertEquals(ace_diamonds, ace_clubs)
+
     def test_deck(self):
-        d = Deck()
+        d = Deck(all_cards())
         self.assertEquals(len(d.cards), 32)
         self.assertEquals(len([c for c in d.cards if str(c) == 'Ace♧']), 1)
 
+    def test_print_hand(self):
+        d = new_deal()
+        self.assertEquals(len(d.pool), 32)
+        d.deal()
+        self.assertEquals(len(d.pool), 32)
+        
     def test_point(self):
         p = Rabelais('Marcus')
         p.draw([
