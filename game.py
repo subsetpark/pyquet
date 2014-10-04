@@ -208,7 +208,8 @@ class Player:
 
 
 class Deal:
-    def __init__(self, elder, younger):
+    def __init__(self, partie, elder, younger):
+        self.partie = partie
         self.deck = Deck()
         self.elder = elder
         self.younger = younger
@@ -313,6 +314,9 @@ class Deal:
 
         self.tricks[winner] += 1
         result['winner'] = winner
+
+        for player in self.players:
+            self.partie.score[player] += self.score[player]
         return result
 
 class Partie:
@@ -321,11 +325,12 @@ class Partie:
         self.dealer = choice(list(players))
         self.non_dealer = (players - {self.dealer}).pop()
         self.deals = []
+        self.score = {player1: 0, player2: 0}
 
     def new_deal(self):
         if len(self.deals) == 0 or len(self.deals) % 2 == 0:
-            d = Deal(self.non_dealer, self.dealer)
+            d = Deal(self, self.non_dealer, self.dealer)
         elif len(self.deals) % 2 == 1:
-            d = Deal(self.dealer, self.non_dealer)
+            d = Deal(self, self.dealer, self.non_dealer)
         self.deals.append(d)
         return d

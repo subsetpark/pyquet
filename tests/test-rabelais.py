@@ -1,11 +1,12 @@
 from unittest import TestCase
-from pyquet import Deck, Deal, Player, Rank, Suit, Card
-from pyquet.rabelais import Rabelais
+from pyquet.game import Deck, Deal, Player, Rank, Suit, Card, Partie
+from pyquet.players import Rabelais
 
 def new_deal():
     p1 = Rabelais('Marcus')
     p2 = Rabelais('Vergil')
-    return Deal(p1, p2)
+    p = Partie(p1, p2)
+    return Deal(p, p1, p2)
 
 class TestRabelais(TestCase):
     def test_get_elder_exchange(self):

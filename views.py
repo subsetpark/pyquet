@@ -1,5 +1,5 @@
-from classes import Player, Declaration, Partie, Category
-from rabelais import Rabelais
+from pyquet.game import Declaration, Partie, Category
+from pyquet.players import Rabelais, HumanPlayer
 
 class Prompt:
     ELDER_EXCHANGE = 1
@@ -8,57 +8,30 @@ class Prompt:
 class Client:
 
     def get_player(self, player_num):
-        return Player(input("Player {}, please enter your name: ".format(player_num)))
+        return HumanPlayer(input("Player {}, please enter your name: ".format(player_num)))
 
     def __init__(self):
         player1 = self.get_player('1')
         player2 = Rabelais('Rabelais')
         self.partie = Partie(player1, player2)
 
-    def get_cards(self, prompt, player, max_cards=1):
-        if not isinstance(player, Rabelais):
-            messages = {
-                Prompt.ELDER_EXCHANGE: '{}, please exchange up to five cards.'.format(player),
-                Prompt.YOUNGER_EXCHANGE: '{}, please exchange up to {} cards.'.format(player, max_cards)
-            }
-            card_str = input("\n{}\nYour hand: {}\n".format(messages[prompt], player.print_hand()))
-            cards = card_str.split()
-
-            if len(cards) > max_cards:
-                print("You may draw up to {} cards".format(max_cards))
-                return self.get_cards(prompt, player, max_cards)
-
-            if len(set(cards)) != len(cards):
-                print("Please select up to {} unique cards.")
-                return self.get_cards(prompt, player, max_cards)
-
-            try:
-                result = [player.hand[chars] for chars in cards]
-            except KeyError:
-                return self.get_cards(prompt, player, max_cards)
-        
-        else:
-            functions = {
-                Prompt.ELDER_EXCHANGE: player.get_elder_exchange,
-                Prompt.YOUNGER_EXCHANGE: player.get_younger_exchange
-            }
-            
-            result = functions[prompt]
-
-        return result
-
     def exchange(self, deal):
         elder, younger = deal.elder, deal.younger
+        
         if elder.carte_blanche:
             print('{} is carte blanche.'.format(elder))
-        elder_exchange = self.get_cards(Prompt.ELDER_EXCHANGE, elder, max_cards=5)
+        
+        elder_exchange = elder.get_elder_exchange()
+        print('{} exchanges {} cards.'.format(elder, len(elder_exchange)))
         deal.exchange(elder, elder_exchange)
         
         remainder = len(deal.deck)
         
         if younger.carte_blanche:
             print('{} is carte_blanche.'.format(younger))
-        younger_exchange = self.get_cards(Prompt.YOUNGER_EXCHANGE, younger, max_cards=remainder)
+        
+        younger_exchange = younger.get_younger_exchange(remainder)
+        print('{} exchanges {} cards.'.format(younger, len(younger_exchange)))
         deal.exchange(younger, younger_exchange)        
 
     def declarations(self, deal):
@@ -66,7 +39,7 @@ class Client:
         younger = deal.younger
 
         winners = {category: {} for category in Category.categories}
-        
+        print('---')
         for attr in Category.categories:
             elder_result = getattr(elder, attr)
             younger_result = getattr(younger, attr)
@@ -121,14 +94,16 @@ class Client:
         while lead.hand:
             follow = (deal.players - {lead}).pop()
 
-            lead_card = self.get_cards('\n{}, please lead.'.format(lead), lead)[0]
-            follow_card = self.get_cards('{}, play {}.'.format(follow, lead_card.suit), follow)[0]
-            
+            lead_card = lead.get_lead()
+            print('{} plays {}.'.format(lead, lead_card))
+            follow_card = follow.get_follow(lead_card)
+            print('{} plays {}.'.format(follow, follow_card))
             lead_play = {'player': lead, 'card': lead_card}
             follow_play = {'player': follow, 'card': follow_card}
             
             result = deal.play_trick(lead_play, follow_play)
             lead = result['winner']
+            print('{} takes the trick.'.format(lead))
 
             if not announced_pique and deal.pique:
                 print("{} is pique.".format(deal.pique))
@@ -152,10 +127,8 @@ class Client:
 
     def play_a_game(self):
         while len(self.partie.deals) < 6:
-            scores = self.play_a_hand()
-            for player in self.partie.players:
-                player.score += scores[player]
-            print("After {} deals, the score is {}")
+            self.play_a_hand()
+            print("After {} deal(s), the score is {}".format(len(self.partie.deals), self.partie.score))
 
 if __name__ == "__main__":
     c = Client()

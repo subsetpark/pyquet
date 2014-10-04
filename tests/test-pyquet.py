@@ -1,10 +1,11 @@
 from unittest import TestCase
-from pyquet import Deck, Deal, Player, Rank, Suit, Card
+from pyquet.game import Partie, Deck, Deal, Player, Rank, Suit, Card
 
 def new_deal():
     p1 = Player('Marcus')
     p2 = Player('Vergil')
-    return Deal(p1, p2)
+    p = Partie(p1, p2)
+    return Deal(p, p1, p2)
 
 class TestClasses(TestCase):
     def test_card(self):
