@@ -77,6 +77,9 @@ class Card:
         }
         return '{}{}'.format(CHARMAP[self.rank], CHARMAP[self.suit])
 
+    def __hash__(self):
+        return hash(self.hash())
+
 class Deck:
     def __init__(self):
         self.cards = [Card(r, s) for r in Rank for s in Suit.suits]
@@ -97,8 +100,9 @@ class Player:
         return '{}'.format(self.name)
 
     def suits(self):
-        return sorted([[c for c in self.hand.values() if c.suit == s] for s in Suit.suits], 
-                      key=len)
+        return sorted([
+               sorted([c for c in self.hand.values() if c.suit == s], key=lambda x:x.rank.value) 
+                      for s in Suit.suits], key=len)
 
     def print_hand(self):
         cards = sorted(self.hand.values(), key=lambda c: (c.suit, c.rank.value))
