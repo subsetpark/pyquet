@@ -1,5 +1,5 @@
 from unittest import TestCase
-from core.game import Partie, Deck, Deal, Rank, Suit, Card, all_cards
+from core.game import Partie, Deck, Deal, Rank, Suit, Card, all_cards, Result, Category
 from core.players import Rabelais
 
 def new_deal():
@@ -27,9 +27,10 @@ class TestClasses(TestCase):
         self.assertEquals(len(d.pool), 32)
         d.deal()
         self.assertEquals(len(d.pool), 32)
-        
+
     def test_point(self):
-        p = Rabelais('Marcus')
+        d = new_deal()
+        p = d.elder
         p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
@@ -52,7 +53,8 @@ class TestClasses(TestCase):
         self.assertEquals(point.score, 4)
         self.assertEquals(point.value, 41)
 
-        p = Rabelais('Marcus')
+        d = new_deal()
+        p = d.elder
         p.draw([
             Card(Rank.Seven, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
@@ -76,7 +78,8 @@ class TestClasses(TestCase):
         self.assertEquals(point.value, 37)
 
     def test_sequences(self):
-        p = Rabelais('Marcus')
+        d = new_deal()
+        p = d.elder
         p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
@@ -100,10 +103,11 @@ class TestClasses(TestCase):
             Card(Rank.Queen, Suit.HEARTS),
             Card(Rank.King, Suit.HEARTS),
         ]
-        self.assertEquals(p.sequences, p.Result(p, 4, [run]))
+        self.assertEquals(p.sequences, Result(p, Category.SEQUENCES, 4, [run]))
 
     def test_sets(self):
-        p = Rabelais('Marcus')
+        d = new_deal()
+        p = d.elder
         p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
@@ -133,7 +137,7 @@ class TestClasses(TestCase):
                 Card(Rank.King, Suit.CLUBS)
             ]
         ]
-        self.assertEquals(p.sets, p.Result(p, 4, sets))
+        self.assertEquals(p.sets, Result(p, Category.SETS, 4, sets))
 
     def test_deal_deal(self):
         d = new_deal()

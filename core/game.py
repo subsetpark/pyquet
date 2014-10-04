@@ -343,14 +343,13 @@ class Deal:
 
         elder.deal = self
         younger.deal = self
+        self.reset_players()
  
     def reset_players(self):
         for player in self.players:
             player.reset()         
 
     def deal(self):
-        self.reset_players()
-
         for i in range(12):
             self.elder.draw([self.deck.pop()])
             self.younger.draw([self.deck.pop()])
