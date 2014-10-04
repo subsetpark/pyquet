@@ -107,10 +107,7 @@ class Player:
     def print_hand(self):
         cards = sorted(self.hand.values(), key=lambda c: (c.suit, c.rank.value))
         return " | ".join([str(c) for c in cards])
-
-    def draw(self, cards):
-        for card in cards:
-            self.hand[card.hash()] = card
+        
 
     class Result:
         def __init__(self, player, score, value):

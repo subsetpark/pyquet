@@ -1,4 +1,4 @@
-from pyquet.game import Rank, Player, Category
+from pyquet.game import Rank, Player, Category, Deck
 
 class HumanPlayer(Player):
     def get_cards(self, message, max_cards=1):
@@ -30,8 +30,19 @@ class HumanPlayer(Player):
     def get_follow(self, lead_card):
         return self.get_cards('{}, play {}.'.format(self, lead_card.suit))[0]
 
+    def draw(self, cards):
+        for card in cards:
+            self.hand[card.hash()] = card
+
+    def register(self, player, card, silent=False):
+        if not silent:
+            print('{} plays {}.'.format(player, card))
 
 class Rabelais(Player):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.unseen_cards = set(Deck().cards)
 
     SCORE_VALUES = {
         Category.POINT: {
@@ -70,7 +81,6 @@ class Rabelais(Player):
         suits = self.suits()
 
         point_suit = suits[-1]
-        max_length = len(point_suit)
 
         low_non_points = [card for card in self.hand.values() if card.rank in low_ranks and card not in point_suit]
         if len(low_non_points) >= 5:
@@ -122,3 +132,11 @@ class Rabelais(Player):
                 return follow_suit[0]
         else:
             return sorted(self.hand.values())[0]
+
+    def draw(self, cards):
+        for card in cards:
+            self.hand[card.hash()] = card
+            self.register(self, card)
+
+    def register(self, player, card, silent=True):
+        self.unseen_cards.remove(card)

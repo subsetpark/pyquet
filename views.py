@@ -95,7 +95,8 @@ class Client:
             follow = (deal.players - {lead}).pop()
 
             lead_card = lead.get_lead()
-            print('{} plays {}.'.format(lead, lead_card))
+            for player in deal.players:
+                player.register(lead, lead_card)
             follow_card = follow.get_follow(lead_card)
             print('{} plays {}.'.format(follow, follow_card))
             lead_play = {'player': lead, 'card': lead_card}

@@ -14,11 +14,9 @@ class TestRabelais(TestCase):
         d.deal()
         r = d.elder
         exchange = r.get_elder_exchange()
-        print('{} from {}'.format(exchange, r.print_hand()))
         self.assertEquals(exchange[0].__class__, Card)
         d.exchange(r, exchange)
 
         r = d.younger
         exchange = r.get_younger_exchange(max_cards=3)
-        print('{} from {}'.format(exchange, r.print_hand()))
         d.exchange(r, exchange)

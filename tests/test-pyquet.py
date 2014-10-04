@@ -1,9 +1,10 @@
 from unittest import TestCase
-from pyquet.game import Partie, Deck, Deal, Player, Rank, Suit, Card
+from pyquet.game import Partie, Deck, Deal, Rank, Suit, Card
+from pyquet.players import Rabelais
 
 def new_deal():
-    p1 = Player('Marcus')
-    p2 = Player('Vergil')
+    p1 = Rabelais('Marcus')
+    p2 = Rabelais('Vergil')
     p = Partie(p1, p2)
     return Deal(p, p1, p2)
 
@@ -21,7 +22,7 @@ class TestClasses(TestCase):
         self.assertEquals(len([c for c in d.cards if str(c) == 'Ace♧']), 1)
 
     def test_point(self):
-        p = Player('Marcus')
+        p = Rabelais('Marcus')
         p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
@@ -44,7 +45,7 @@ class TestClasses(TestCase):
         self.assertEquals(point.score, 4)
         self.assertEquals(point.value, 41)
 
-        p.hand = {}
+        p = Rabelais('Marcus')
         p.draw([
             Card(Rank.Seven, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
@@ -68,7 +69,7 @@ class TestClasses(TestCase):
         self.assertEquals(point.value, 37)
 
     def test_sequences(self):
-        p = Player('Marcus')
+        p = Rabelais('Marcus')
         p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
@@ -95,7 +96,7 @@ class TestClasses(TestCase):
         self.assertEquals(p.sequences, p.Result(p, 4, [run]))
 
     def test_sets(self):
-        p = Player('Marcus')
+        p = Rabelais('Marcus')
         p.draw([
             Card(Rank.Jack, Suit.HEARTS),
             Card(Rank.Ten, Suit.HEARTS),
