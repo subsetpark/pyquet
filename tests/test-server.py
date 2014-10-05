@@ -12,5 +12,6 @@ class Robot(Server):
 
 class TestServer(TestCase):
     def test_play_robots(self):
-        r = Robot()
-        r.play_a_game()
+        for i in range(100):
+            r = Robot()
+            r.play_a_game()

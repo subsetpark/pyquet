@@ -62,7 +62,7 @@ class Server:
 
                 if good == Good.EQUAL:
                     detail = True
-                    elder_declaration = Declaration(getattr(elder, category), detail=True)
+                    elder_declaration = Declaration(getattr(elder, category), detail)
                     good = younger.get_good(elder_declaration)
 
                     self.announce('{} has {}.'.format(elder, elder_declaration))
