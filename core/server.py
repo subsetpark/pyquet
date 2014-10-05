@@ -86,7 +86,7 @@ class Server:
         deal.score_declarations()
         if deal.repique:
             self.announce('{} is repique.'.format(deal.repique))
-        self.announce(self.deal.score)
+        self.announce(deal.score)
 
     def tricks(self, deal):
         lead = deal.elder
