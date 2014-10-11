@@ -431,7 +431,6 @@ class Deal:
         for category in (Category.POINT, Category.SEQUENCES, Category.SETS):
             declarations = [player.declare(category) for player in self.players]
             winning_score = max(declarations) if declarations[0] != declarations[1] else None
-            print("Winner in {}: {}".format(category, winning_score))
             if winning_score:
                 winner = winning_score.player
                 self.score[winner] += winning_score.value
