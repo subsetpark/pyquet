@@ -138,22 +138,33 @@ class Rabelais(Player):
         return scored_cards[:max_cards]
 
     def get_lead(self):
-        best_suit = (None, 0)
+        safe_cards = {}
+        high_card = None
         for suit_cards in self.suits():
             if suit_cards:
-                suit = suit_cards[0].suit
                 counter = 0
+                safe_card = None
+                suit = suit_cards[0].suit
                 suit_cards.reverse()
-                for rank in reversed([r for r in Rank]):
-                    candidate = Card(rank, suit).hash()
-                    if self.hand.get(candidate) or self.seen_cards.get(candidate):
-                        counter +=1
-                if counter > best_suit[1]:
-                    best_suit = (suit, counter)
-        if best_suit[0]:
-            return self.get_suit(best_suit[0])[0]
+                for i, rank in enumerate(reversed([r for r in Rank])):
+                    candidate = Card(rank, suit)
+                    
+                    if not self.seen_cards.get(candidate.hash()):
+                        break
+
+                    counter +=1
+                    if (not safe_card or candidate > safe_card) and self.hand.get(candidate.hash()):
+                        safe_card = candidate
+                        
+                if safe_card:
+                    safe_cards[suit] = {'card': safe_card, 'run': counter}
+
+        if safe_cards:
+            high_card = max(safe_cards.values(), key=lambda d: (d['run'], d['card']))['card']
+        if high_card:
+            return self.hand[high_card.hash()]
         else:
-            return self.suits()[-1][-1]
+            return self.suits()[-1][0]
 
     def get_follow(self, lead_card):
         follow_suit = self.get_suit(lead_card.suit)
@@ -172,5 +183,4 @@ class Rabelais(Player):
             self.seen_cards[card.hash()] = card
 
     def register(self, player, card, silent=True):
-        if player != self:
-            self.seen_cards[card.hash()] = card
+        self.seen_cards[card.hash()] = card

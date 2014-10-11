@@ -7,8 +7,8 @@ class Viewer(Rabelais):
         print(message)
 
     def register(self, player, card, silent=False):
-        if not silent:
-            print('{} plays {}.'.format(player, card))
+        self.seen_cards[card.hash()] = card
+        print('{} plays {}.'.format(player, card))
 
 
 class Robot(Server):

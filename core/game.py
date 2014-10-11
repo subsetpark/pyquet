@@ -183,7 +183,7 @@ class Result:
             return (self.first, self.second[0]) == (other.first, other.second[0])
 
     def __repr__(self):
-        return 'Result: {} with {}, {}'.format(self.player, self.first, self.second)
+        return '{} with {}, {}'.format(self.player, self.first, self.second)
 
     def find_card(self, card):
         if not self.value:
@@ -260,7 +260,7 @@ class Player:
             sorted([c for c in self.hand.values() if c.suit == s], key=lambda x:x.rank.value)
             for s in Suit.suits], key=len)
 
-    def print_hand(self):
+    def print_hand(self, hand=None):
         def print_hash(card):
             if not card:
                 return "  "
@@ -280,7 +280,8 @@ class Player:
             }
             return '{}{}'.format(PRINTMAP[card.rank], PRINTMAP[card.suit])
 
-        all_cards = [print_hash(self.hand.get(card.hash(), "")) for card in self.deal.pool]
+        hand = hand or self.hand
+        all_cards = [print_hash(hand.get(card.hash(), "")) for card in self.deal.pool]
         suits = "\n".join([" | ".join(all_cards[n * 8:(n * 8) + 8]) for n in range(0, 4)])
 
         return suits
@@ -428,9 +429,12 @@ class Deal:
 
     def score_declarations(self):
         for category in (Category.POINT, Category.SEQUENCES, Category.SETS):
-            winning_score = max([player.declare(category) for player in self.players])
-            winner = winning_score.player
-            self.score[winner] += winning_score.value
+            declarations = [player.declare(category) for player in self.players]
+            winning_score = max(declarations) if declarations[0] != declarations[1] else None
+            print("Winner in {}: {}".format(category, winning_score))
+            if winning_score:
+                winner = winning_score.player
+                self.score[winner] += winning_score.value
         # Repique
         for player in self.players:
             other_player = (self.players - {player}).pop()
