@@ -2,13 +2,16 @@ from unittest import TestCase
 from core.game import Partie, Deck, Deal, Rank, Suit, Card, all_cards, Result, Category
 from core.players import Rabelais
 
+
 def new_deal():
     p1 = Rabelais('Marcus')
     p2 = Rabelais('Vergil')
     p = Partie(p1, p2)
     return Deal(p, p1, p2)
 
+
 class TestClasses(TestCase):
+
     def test_card(self):
         ace_diamonds = Card(Rank.Ace, Suit.DIAMONDS)
         king_clubs = Card(Rank.King, Suit.CLUBS)
@@ -131,7 +134,7 @@ class TestClasses(TestCase):
                 Card(Rank.Queen, Suit.HEARTS),
                 Card(Rank.Queen, Suit.SPADES),
                 Card(Rank.Queen, Suit.CLUBS),
-            ],[
+            ], [
                 Card(Rank.King, Suit.HEARTS),
                 Card(Rank.King, Suit.SPADES),
                 Card(Rank.King, Suit.CLUBS)
@@ -162,9 +165,3 @@ class TestClasses(TestCase):
         assert len(d.elder.hand) == len(d.younger.hand) == 12
         self.assertEquals(len(d.deck.cards), 0)
         self.assertEquals(len(d.discards[d.elder] + d.discards[d.younger]), 8)
-
-    def test_hand_evaluator(self):
-        d = new_deal()
-        d.deal()
-        print(d.elder.print_hand())
-        print(d.elder.evaluate_hand())

@@ -15,7 +15,7 @@ class HumanPlayer(Player):
                 computer = self.deal.elder
             else:
                 computer = self.deal.younger
-            print("{}:\n{}\nSeen: {}".format(computer, computer.print_hand(), computer.seen_cards))
+            self.announce("{}:\n{}\nSeen: {}".format(computer, computer.print_hand(), computer.seen_cards))
 
         if not card_str:
             return []
@@ -23,15 +23,15 @@ class HumanPlayer(Player):
         cards = [string.upper() for string in card_str.split()]
 
         if len(cards) > max:
-            print("You may draw up to {} cards".format(max))
+            self.announce("You may draw up to {} cards".format(max))
             return self.get_cards(message, min, max)
 
         if len(set(cards)) != len(cards):
-            print("Please select up to {} unique cards.")
+            self.announce("Please select up to {} unique cards.")
             return self.get_cards(message, min, max)
 
         if len(cards) < min:
-            print("Please select at least {} cards.".format(min))
+            self.announce("Please select at least {} cards.".format(min))
             return self.get_cards(message, min, max)
 
         try:
@@ -54,7 +54,7 @@ class HumanPlayer(Player):
 
     def get_follow(self, lead_card):
         card = self.get_cards('{}, play {}.'.format(self, lead_card.suit))[0]
-        
+
         if card.suit != lead_card.suit and self.get_suit(lead_card.suit):
             self.announce("You must play {}".format(lead_card.suit))
             return self.get_follow(lead_card)
@@ -67,7 +67,7 @@ class HumanPlayer(Player):
 
     def register(self, player, card, silent=False):
         if not silent:
-            print('{} plays {}.'.format(player, card))
+            self.announce('{} plays {}.'.format(player, card))
 
 
 class Rabelais(Player):
@@ -94,7 +94,7 @@ class Rabelais(Player):
                 if result.find_card(card):
                     score += result.value * result.strength
             scored_cards[card] = score
-        
+
         # Score for trick-taking ability
         for suit in self.suits():
             if not suit:
@@ -102,12 +102,12 @@ class Rabelais(Player):
 
             suit.reverse()
 
-            if suit[0].rank == Rank.Ace: # Offensive ability
+            if suit[0].rank == Rank.Ace:  # Offensive ability
                 scored_cards[suit[0]] = scored_cards.get(suit[0], 0) + 1
                 for i, card in enumerate(suit):
                     scored_cards[card] = scored_cards.get(card, 0) + 1
                     keepers.append(card)
-                    if i == len(suit) - 1 or card - suit[i+1] != 1:
+                    if i == len(suit) - 1 or card - suit[i + 1] != 1:
                         break
             else:                        # Defensive ability
                 distance = 14 - suit[0].rank.value
@@ -119,7 +119,6 @@ class Rabelais(Player):
         result = sorted([(score, card) for card, score in scored_cards.items()])
         return {'cards': [weighted[1] for weighted in result],
                 'keepers': keepers}
-
 
     def get_elder_exchange(self):
         scored_cards = self.evaluate_hand()
@@ -148,14 +147,14 @@ class Rabelais(Player):
                 suit_cards.reverse()
                 for i, rank in enumerate(reversed([r for r in Rank])):
                     candidate = Card(rank, suit)
-                    
+
                     if not self.seen_cards.get(candidate.hash()):
                         break
 
-                    counter +=1
+                    counter += 1
                     if (not safe_card or candidate > safe_card) and self.hand.get(candidate.hash()):
                         safe_card = candidate
-                        
+
                 if safe_card:
                     safe_cards[suit] = {'card': safe_card, 'run': counter}
 
