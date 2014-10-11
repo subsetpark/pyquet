@@ -51,7 +51,9 @@ class HumanPlayer(Player):
         return self.get_cards('\n{}, please lead.'.format(self))[0]
 
     def get_follow(self, lead_card):
-        return self.get_cards('{}, play {}.'.format(self, lead_card.suit))[0]
+        card = self.get_cards('{}, play {}.'.format(self, lead_card.suit))[0]
+        if card.suit != lead_card.suit and [card for card in self.hand.values() if card.suit == lead_card.suit]:
+            raise ValueError("You must play {}".format(lead_card))
 
     def draw(self, cards):
         for card in cards:
