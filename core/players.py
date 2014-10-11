@@ -55,7 +55,7 @@ class HumanPlayer(Player):
         card = self.get_cards('{}, play {}.'.format(self, lead_card.suit))[0]
         
         if card.suit != lead_card.suit and [card for card in self.hand.values() if card.suit == lead_card.suit]:
-            self.announce("You must play {}".format(lead_card))
+            self.announce("You must play {}".format(lead_card.suit))
             return self.get_follow(lead_card)
 
         return card

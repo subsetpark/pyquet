@@ -171,10 +171,17 @@ class Result:
         self.point_suit = point_suit
 
     def __lt__(self, other):
-        return (self.first, self.second) < (other.first, other.second)
+        if self.category == Category.POINT or not self.second or not other.second:
+            return (self.first, self.second) < (other.first, other.second)
+        else:
+            return (self.first, self.second[0]) < (other.first, other.second[0])
 
     def __eq__(self, other):
-        return (self.first, self.second) == (other.first, other.second)
+        if self.category == Category.POINT or not self.second or not other.second:
+            return (self.first, self.second) == (other.first, other.second)
+        else:
+            return (self.first, self.second[0]) == (other.first, other.second[0])
+
 
     def __repr__(self):
         return 'Result: {} with {}, {}'.format(self.player, self.first, self.second)
