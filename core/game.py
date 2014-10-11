@@ -182,7 +182,6 @@ class Result:
         else:
             return (self.first, self.second[0]) == (other.first, other.second[0])
 
-
     def __repr__(self):
         return 'Result: {} with {}, {}'.format(self.player, self.first, self.second)
 
@@ -286,45 +285,11 @@ class Player:
 
         return suits
 
-    def evaluate_hand(self):
-        scored_cards = {}
-        keepers = []
-        # Score for position in declarations
-        for card in self.hand.values():
-            score = 0
-            for category in Category.categories:
-                result = self.declare(category)
-                if result.find_card(card):
-                    score += result.value * result.strength
-            scored_cards[card] = score
-        
-        # Score for trick-taking ability
-        for suit in self.suits():
-            if not suit:
-                continue
-
-            suit.reverse()
-
-            if suit[0].rank == Rank.Ace: # Offensive ability
-                scored_cards[suit[0]] = scored_cards.get(suit[0], 0) + 1
-                for i, card in enumerate(suit):
-                    scored_cards[card] = scored_cards.get(card, 0) + 1
-                    keepers.append(card)
-                    if i == len(suit) - 1 or card - suit[i+1] != 1:
-                        break
-            else:                        # Defensive ability
-                distance = 14 - suit[0].rank.value
-                if len(suit) - 1 >= distance:
-                    for card in suit[:distance + 1]:
-                        scored_cards[card] = scored_cards.get(card, 0) + .5
-                        keepers.append(card)
-
-        result = sorted([(score, card) for card, score in scored_cards.items()])
-        return {'cards': [weighted[1] for weighted in result],
-                'keepers': keepers}
-
     def declare(self, category):
         return getattr(self, category)
+
+    def get_suit(self, suit):
+        return sorted([card for card in self.hand.values() if card.suit == suit])
 
     @property
     def carte_blanche(self):
@@ -421,6 +386,7 @@ class Player:
         else:
             good = Good.NOT_GOOD
         return good
+
 
 class Deal:
 
