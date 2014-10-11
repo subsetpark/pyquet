@@ -67,7 +67,7 @@ class Rabelais(Player):
     def announce(self, message):
         pass
 
-    def get_elder_exchange(self, max):
+    def get_elder_exchange(self):
         scored_cards = self.evaluate_hand()
         return scored_cards['cards'][:5]
 
