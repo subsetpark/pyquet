@@ -50,8 +50,8 @@ class TestClasses(TestCase):
         ])
 
         point = p.point
-        self.assertEquals(point.score, 4)
-        self.assertEquals(point.value, 41)
+        self.assertEquals(point.first, 4)
+        self.assertEquals(point.second, 41)
 
         d = new_deal()
         p = d.elder
@@ -74,8 +74,8 @@ class TestClasses(TestCase):
         ])
 
         point = p.point
-        self.assertEquals(point.score, 4)
-        self.assertEquals(point.value, 37)
+        self.assertEquals(point.first, 4)
+        self.assertEquals(point.second, 37)
 
     def test_sequences(self):
         d = new_deal()
@@ -162,3 +162,9 @@ class TestClasses(TestCase):
         assert len(d.elder.hand) == len(d.younger.hand) == 12
         self.assertEquals(len(d.deck.cards), 0)
         self.assertEquals(len(d.discards[d.elder] + d.discards[d.younger]), 8)
+
+    def test_hand_evaluator(self):
+        d = new_deal()
+        d.deal()
+        print(d.elder.print_hand())
+        print(d.elder.evaluate_hand())

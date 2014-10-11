@@ -1,6 +1,7 @@
 from enum import Enum
 from random import shuffle, choice
 
+
 class Rank(Enum):
     Seven = 7
     Eight = 8
@@ -22,6 +23,7 @@ PIPS = {
     Rank.Ace: 11
 }
 
+
 class Suit:
     DIAMONDS = '♢'
     HEARTS = '♡'
@@ -29,16 +31,43 @@ class Suit:
     CLUBS = '♧'
     suits = [DIAMONDS, HEARTS, SPADES, CLUBS]
 
+
 class Good:
     GOOD = 'good'
     EQUAL = 'equal'
     NOT_GOOD = 'not good'
+
 
 class Category:
     POINT = 'point'
     SEQUENCES = 'sequences'
     SETS = 'sets'
     categories = [POINT, SEQUENCES, SETS]
+
+SCORE_VALUES = {
+    Category.POINT: {
+        0: 0,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8
+    },
+    Category.SEQUENCES: {
+        0: 0,
+        3: 3,
+        4: 4,
+        5: 15,
+        6: 16,
+        7: 17,
+        8: 18
+    },
+    Category.SETS: {
+        0: 0,
+        3: 3,
+        4: 14
+    }
+}
 
 
 class Card:
@@ -82,10 +111,13 @@ class Card:
     def __hash__(self):
         return hash(self.hash())
 
+
 def all_cards():
     return [Card(r, s) for s in Suit.suits for r in Rank]
 
+
 class Deck:
+
     def __init__(self, cards):
         self.cards = []
         self.cards.extend(cards)
@@ -97,42 +129,63 @@ class Deck:
     def pop(self):
         return self.cards.pop()
 
+
 class Declaration:
+
     def __init__(self, result, detail=False):
         self.category = result.category
         self.result = result
-        self.score = result.score
-        self.value = result.value if detail else None
+        self.first = result.first
+        self.second = result.second if detail else None
 
     def __str__(self):
-        if self.value:
+        if self.second:
             return self.result.score_name(detail=True)
         else:
             return self.result.score_name(detail=False)
 
     @property
     def all_results(self):
-        if self.value:
+        if self.second:
             return self.result.score_name(detail=True, multiple=True)
         else:
             return self.result.score_name(detail=False, multiple=True)
 
 
 class Result:
-    def __init__(self, player, category, score, value):
+
+    def __init__(self, player, category, first, second, point_suit=None):
         self.category = category
         self.player = player
-        self.score = score
-        self.value = value
+        self.first = first
+        self.second = second
+        if category == Category.POINT:
+            self.value = SCORE_VALUES[category][first]
+        else:
+            self.value = sum([SCORE_VALUES[category][len(cards)] for cards in self.second])
+
+        candidate_scores = SCORE_VALUES[category].keys()
+        losing_scores = [score for score in candidate_scores if score < self.first]
+        self.strength = len(losing_scores) / len(candidate_scores) if losing_scores else 0
+
+        self.point_suit = point_suit
 
     def __lt__(self, other):
-        return (self.score, self.value) < (other.score, other.value)
+        return (self.first, self.second) < (other.first, other.second)
 
     def __eq__(self, other):
-        return (self.score, self.value) == (other.score, other.value)
+        return (self.first, self.second) == (other.first, other.second)
 
     def __repr__(self):
-        return 'Result: {} with {}, {}'.format(self.player, self.score, self.value)
+        return 'Result: {} with {}, {}'.format(self.player, self.first, self.second)
+
+    def find_card(self, card):
+        if not self.value:
+            return []
+        elif self.point_suit:
+            return [p for p in self.point_suit if p.rank == card.rank and p.suit == card.suit]
+        else:
+            return [s for second in self.second for s in second if s.rank == card.rank and s.suit == card.suit]
 
     def score_name(self, detail=False, multiple=False):
         POINT_NAMES = {
@@ -151,39 +204,40 @@ class Result:
         }
         detail_name = ''
         if self.category == Category.POINT:
-            values = [self.value]
-        
+            seconds = [self.second]
+
         else:
             if multiple:
-                values = self.value
+                seconds = self.second
             else:
-                values = self.value[0:1]
+                seconds = self.second[0:1]
 
         full_names = []
-        for value in values:      
+        for second in seconds:
             if self.category == Category.POINT:
-                point_name = 'Point of {}'.format(self.score)
+                point_name = 'Point of {}'.format(self.first)
 
             else:
-                point_name = POINT_NAMES[self.category][len(value)]
+                point_name = POINT_NAMES[self.category][len(second)]
 
             if detail:
                 if self.category == Category.POINT:
-                    detail_name = " making {}".format(self.value)
+                    detail_name = " making {}".format(self.second)
                 if self.category == Category.SEQUENCES:
-                    if value[0].rank == Rank.Seven:
+                    if second[0].rank == Rank.Seven:
                         detail_name = ' minor'
-                    if value[-1].rank == Rank.Ace:
+                    if second[-1].rank == Rank.Ace:
                         detail_name = ' major'
                     else:
-                        detail_name = ' to the {}'.format(value[-1].rank.name)
+                        detail_name = ' to the {}'.format(second[-1].rank.name)
                 if self.category == Category.SETS:
-                    detail_name = ' of {}s'.format(value[0].rank.name)
+                    detail_name = ' of {}s'.format(second[0].rank.name)
             full_names.append('{}{}'.format(point_name, detail_name))
         return ", ".join(full_names)
 
 
 class Player:
+
     def __init__(self, name):
         self.hand = {}
         self.name = name
@@ -197,8 +251,8 @@ class Player:
 
     def suits(self):
         return sorted([
-               sorted([c for c in self.hand.values() if c.suit == s], key=lambda x:x.rank.value) 
-                      for s in Suit.suits], key=len)
+            sorted([c for c in self.hand.values() if c.suit == s], key=lambda x:x.rank.value)
+            for s in Suit.suits], key=len)
 
     def print_hand(self):
         def print_hash(card):
@@ -221,10 +275,23 @@ class Player:
             return '{}{}'.format(PRINTMAP[card.rank], PRINTMAP[card.suit])
 
         all_cards = [print_hash(self.hand.get(card.hash(), "")) for card in self.deal.pool]
-        suits = "\n".join([" | ".join(all_cards[n*8:(n*8)+8]) for n in range(0, 4)])
+        suits = "\n".join([" | ".join(all_cards[n * 8:(n * 8) + 8]) for n in range(0, 4)])
 
         return suits
 
+    def evaluate_hand(self):
+        scored_cards = []
+        for card in self.hand.values():
+            score = 0
+            for category in Category.categories:
+                result = self.declare(category)
+                if result.find_card(card):
+                    score += result.value * result.strength
+            scored_cards.append((score, card))
+        return sorted(scored_cards)
+
+    def declare(self, category):
+        return getattr(self, category)
 
     @property
     def carte_blanche(self):
@@ -241,7 +308,7 @@ class Player:
         suits = self.suits()
 
         max_length = len(suits[-1])
-        
+
         if max_length < 4:
             return Result(self, Category.POINT, 0, 0)
 
@@ -251,8 +318,8 @@ class Player:
         max_points = max(point_pips)
         point_suit = point_suits[point_pips.index(max_points)]
         point_length = len(point_suit)
-    
-        return Result(self, Category.POINT, point_length, max_points)
+
+        return Result(self, Category.POINT, point_length, max_points, point_suit=point_suit)
 
     @property
     def sequences(self):
@@ -272,7 +339,7 @@ class Player:
                     if next_card - card == 1:
                         runner = runner + 1
                         run.append(next_card)
-                    else:          
+                    else:
                         break
 
                 if len(run) > len(longest_sequence):
@@ -280,11 +347,11 @@ class Player:
 
                 i = runner
                 runner = i + 1
-                
+
             sequences.append(longest_sequence)
 
         sequences = sorted([sequence for sequence in sequences if len(sequence) >= 3],
-                            key=lambda l: (-len(l), -l[0].rank.value))
+                           key=lambda l: (-len(l), -l[0].rank.value))
         max_length = len(sequences[0]) if sequences else 0
         return Result(self, Category.SEQUENCES, max_length, sequences)
 
@@ -297,37 +364,17 @@ class Player:
             Rank.Jack,
             Rank.Ten
         ]
-        sets = sorted([l for l in 
-                       [[c for c in self.hand.values() if c.rank == r] 
-                           for r in ELIGIBLE_RANKS] 
-                        if len(l) >= 3],
+        sets = sorted([l for l in
+                       [[c for c in self.hand.values() if c.rank == r]
+                           for r in ELIGIBLE_RANKS]
+                       if len(l) >= 3],
                       key=lambda l: (-len(l), -l[0].rank.value))
         set_class = len(sets[0]) if sets else 0
         return Result(self, Category.SETS, set_class, sets)
 
 
 class Deal:
-    SCORE_VALUES = {
-        Category.POINT: {
-            4: 4,
-            5: 5,
-            6: 6,
-            7: 7,
-            8: 8
-        },
-        Category.SEQUENCES: {
-            3: 3,
-            4: 4,
-            5: 15,
-            6: 16,
-            7: 17,
-            8: 18
-        },
-        Category.SETS: {
-            3: 3,
-            4: 14
-        }
-    }
+
     def __init__(self, partie, elder, younger):
         self.partie = partie
         self.pool = all_cards()
@@ -344,10 +391,10 @@ class Deal:
         elder.deal = self
         younger.deal = self
         self.reset_players()
- 
+
     def reset_players(self):
         for player in self.players:
-            player.reset()         
+            player.reset()
 
     def deal(self):
         for i in range(12):
@@ -366,12 +413,9 @@ class Deal:
 
     def score_declarations(self):
         for category in (Category.POINT, Category.SEQUENCES, Category.SETS):
-            winning_score = max([getattr(player, category) for player in self.players])
+            winning_score = max([player.declare(category) for player in self.players])
             winner = winning_score.player
-            if category == Category.POINT:
-                self.score[winner] += self.SCORE_VALUES[category][winning_score.score]
-            else:
-                self.score[winner] += sum([self.SCORE_VALUES[category][len(value)] for value in winning_score.value])
+            self.score[winner] += winning_score.value
         # Repique
         for player in self.players:
             other_player = (self.players - {player}).pop()
@@ -400,7 +444,6 @@ class Deal:
             winner = lead_player
             loser = follow_player
 
-
         self.tricks[winner] += 1
         result['winner'] = winner
 
@@ -412,11 +455,11 @@ class Deal:
         if not lead_player.hand:
             self.score[winner] += 1
 
-            if self.tricks[winner] == 12: # If winner has taken all the tricks
+            if self.tricks[winner] == 12:  # If winner has taken all the tricks
                 self.score[winner] += 40
                 result['caput'] = winner
 
-            elif self.tricks[winner] != 6: # If winner (and thus both) have taken half the tricks
+            elif self.tricks[winner] != 6:  # If winner (and thus both) have taken half the tricks
                 most_tricks_player = max(self.tricks.items(), key=lambda x: x[1])
                 self.score[most_tricks_player[0]] += 10
 
@@ -425,7 +468,9 @@ class Deal:
 
         return result
 
+
 class Partie:
+
     def __init__(self, player1, player2):
         players = {player1, player2}
         self.players = players
@@ -445,12 +490,11 @@ class Partie:
         return d
 
     def get_final_score(self):
-        self.winner = sorted(list(self.players), key=lambda x:self.score[x])[-1]
+        self.winner = sorted(list(self.players), key=lambda x: self.score[x])[-1]
         self.loser = (self.players - {self.winner}).pop()
         if self.score[self.loser] >= 100:
-            self.final_score = 100 + (self.score[self.winner] - self.score[self.loser]) 
+            self.final_score = 100 + (self.score[self.winner] - self.score[self.loser])
         else:
             self.final_score = 100 + (self.score[self.winner] + self.score[self.loser])
 
         return self.final_score
-        

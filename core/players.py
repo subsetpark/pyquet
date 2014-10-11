@@ -1,6 +1,8 @@
-from core.game import Good, Rank, Player, Category, Deck, all_cards, Declaration
+from core.game import Good, Rank, Player, Category, Deck, all_cards, Declaration, SCORE_VALUES
+
 
 class HumanPlayer(Player):
+
     def announce(self, message):
         print(message)
 
@@ -24,7 +26,7 @@ class HumanPlayer(Player):
             return [self.hand[chars] for chars in cards]
         except KeyError:
             return self.get_cards(message, max)
-    
+
     def get_elder_exchange(self):
         return self.get_cards('{}, please exchange up to five cards.'.format(self), min=0, max=5)
 
@@ -33,7 +35,7 @@ class HumanPlayer(Player):
 
     def get_good(self, declaration):
         # This can be where you can sink eventually
-        my_score = getattr(self, declaration.category)
+        my_score = self.declare(declaration.category)
         if not declaration.value:
             detail = 'score'
         else:
@@ -63,6 +65,7 @@ class HumanPlayer(Player):
         if not silent:
             print('{} plays {}.'.format(player, card))
 
+
 class Rabelais(Player):
 
     def __init__(self, *args, **kwargs):
@@ -73,35 +76,11 @@ class Rabelais(Player):
         super().reset()
         self.unseen_cards = set(self.deal.pool)
 
-    SCORE_VALUES = {
-        Category.POINT: {
-            0: 0,
-            4: 4,
-            5: 5,
-            6: 6,
-            7: 7,
-            8: 8
-        },
-        Category.SEQUENCES: {
-            0: 0,
-            3: 3,
-            4: 4,
-            5: 15,
-            6: 16,
-            7: 17,
-            8: 18
-        },
-        Category.SETS: {
-            0: 0,
-            3: 3,
-            4: 14
-        }
-    }
     def announce(self, message):
         pass
 
     def card_sort(self, cards):
-        return sorted(list(cards), key=lambda x:(x.suit, x.rank.value))
+        return sorted(list(cards), key=lambda x: (x.suit, x.rank.value))
 
     def get_elder_exchange(self):
         low_ranks = {
@@ -117,8 +96,8 @@ class Rabelais(Player):
         if len(low_non_points) >= 5:
             return self.card_sort(low_non_points)[:5]
 
-        sequence_cards = set([card for sequence in self.sequences.value for card in sequence])
-        set_cards = set([card for card_set in self.sets.value for card in card_set])
+        sequence_cards = set([card for sequence in self.sequences.second for card in sequence])
+        set_cards = set([card for card_set in self.sets.second for card in card_set])
         aces = set([card for card in self.hand.values() if card.rank == Rank.Ace])
 
         undesirables = set(self.hand.values()) - (sequence_cards | set_cards | aces)
@@ -139,26 +118,26 @@ class Rabelais(Player):
                 if len(suit) - 1 >= distance:
                     keepers.update(suit[:distance + 1])
 
-        weighted_score = sorted(Category.categories, key=lambda x:-self.SCORE_VALUES[x][getattr(self, x).score])[0]
+        weighted_score = sorted(Category.categories, key=lambda cat: -SCORE_VALUES[cat][self.declare(cat).first])[0]
 
         if weighted_score in (Category.SETS, Category.SEQUENCES):
-            keepers.update([card for group in getattr(self, weighted_score).value for card in group])
+            keepers.update([card for group in getattr(self, weighted_score).second for card in group])
         else:
             keepers.update(suits[-1])
 
         remainder = set(self.hand.values()) - keepers
 
-        return sorted(list(remainder), key=lambda x:x.rank.value)[:max_cards]
+        return sorted(list(remainder), key=lambda x: x.rank.value)[:max_cards]
 
     def get_declaration(self, category, detail=False):
-        return Declaration(getattr(self, category), detail)
+        return Declaration(self.declare(category), detail)
 
     def get_good(self, declaration):
-        my_score = getattr(self, declaration.category)
-        if not declaration.value:
-            detail = 'score'
+        my_score = self.declare(declaration.category)
+        if not declaration.second:
+            detail = 'first'
         else:
-            detail = 'value'
+            detail = 'second'
 
         if getattr(declaration, detail) > getattr(my_score, detail):
             good = Good.GOOD

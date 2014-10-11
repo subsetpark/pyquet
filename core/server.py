@@ -1,6 +1,7 @@
 from core.game import Good, Declaration, Partie, Category
 from core.players import Rabelais, HumanPlayer
 
+
 class Server:
 
     def get_player(self, player_num):
@@ -22,22 +23,22 @@ class Server:
 
     def exchange(self, deal):
         elder, younger = deal.elder, deal.younger
-        
+
         if elder.carte_blanche:
             self.announce('{} is carte blanche.'.format(elder))
-        
+
         elder_exchange = elder.get_elder_exchange()
         self.announce('{} exchanges {} cards.'.format(elder, len(elder_exchange)))
         deal.exchange(elder, elder_exchange)
-        
+
         remainder = len(deal.deck)
-        
+
         if younger.carte_blanche:
             self.announce('{} is carte_blanche.'.format(younger))
-        
+
         younger_exchange = younger.get_younger_exchange(remainder)
         self.announce('{} exchanges {} cards.'.format(younger, len(younger_exchange)))
-        deal.exchange(younger, younger_exchange)        
+        deal.exchange(younger, younger_exchange)
 
     def declarations(self, deal):
         elder = deal.elder
@@ -47,13 +48,13 @@ class Server:
         self.announce('---')
         for category in Category.categories:
             detail = False
-            
-            elder_declaration = Declaration(getattr(elder, category))
 
-            if not elder_declaration.score:
+            elder_declaration = Declaration(elder.declare(category))
+
+            if not elder_declaration.first:
                 good = Good.NOT_GOOD
                 self.announce('{} is not good in {}.'.format(elder, category))
-            
+
             else:
                 good = younger.get_good(elder_declaration)
 
@@ -62,7 +63,7 @@ class Server:
 
                 if good == Good.EQUAL:
                     detail = True
-                    elder_declaration = Declaration(getattr(elder, category), detail)
+                    elder_declaration = Declaration(elder.declare(category), detail)
                     good = younger.get_good(elder_declaration)
 
                     self.announce('{} has {}.'.format(elder, elder_declaration))
@@ -71,7 +72,7 @@ class Server:
             if good == Good.GOOD:
                 winners[category]['winner'] = elder_declaration
             elif good == Good.NOT_GOOD:
-                younger_declaration = Declaration(getattr(younger, category), detail)
+                younger_declaration = Declaration(younger.declare(category), detail)
                 if younger_declaration:
                     winners[category]['winner'] = younger_declaration
 
@@ -79,8 +80,8 @@ class Server:
             result = winners[category]
             winning_declaration = result.get('winner')
             if winning_declaration:
-                self.announce("{winner} wins {category} with {score}.".format(winner=winning_declaration.result.player, 
-                                                                              category=category, 
+                self.announce("{winner} wins {category} with {score}.".format(winner=winning_declaration.result.player,
+                                                                              category=category,
                                                                               score=winning_declaration.all_results))
 
         deal.score_declarations()
@@ -102,7 +103,7 @@ class Server:
 
             lead_play = {'player': lead, 'card': lead_card}
             follow_play = {'player': follow, 'card': follow_card}
-            
+
             result = deal.play_trick(lead_play, follow_play)
             lead = result['winner']
             self.announce('{} takes the trick.'.format(lead))
@@ -112,7 +113,7 @@ class Server:
                 announced_pique = True
 
             self.announce('{}: {}'.format(lead, deal.score[lead]))
-        
+
         if result['caput']:
             self.announce('{} is caput.'.format(result['caput']))
 
@@ -130,9 +131,9 @@ class Server:
         while len(self.partie.deals) < 6:
             self.play_a_hand()
             self.announce("After {} deal(s), the score is {}".format(len(self.partie.deals), self.partie.score))
-        
+
         final_score = self.partie.get_final_score()
-        
+
         winner = self.partie.winner
         loser = self.partie.loser
 
