@@ -98,9 +98,6 @@ class Rabelais(Player):
 
         return scored_cards[:max_cards]
 
-    def get_declaration(self, category, detail=False):
-        return Declaration(self.declare(category), detail)
-
     def get_lead(self):
         return self.suits()[-1][-1]
 
