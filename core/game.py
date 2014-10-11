@@ -302,6 +302,7 @@ class Player:
                 scored_cards[suit[0]] = scored_cards.get(suit[0], 0) + 1
                 for i, card in enumerate(suit):
                     scored_cards[card] = scored_cards.get(card, 0) + 1
+                    keepers.append(card)
                     if i == len(suit) - 1 or card - suit[i+1] != 1:
                         break
             else:                        # Defensive ability
@@ -311,7 +312,7 @@ class Player:
                         scored_cards[card] = scored_cards.get(card, 0) + .5
                         keepers.append(card)
 
-        result = [(score, card) for card, score in scored_cards.items()]
+        result = sorted([(score, card) for card, score in scored_cards.items()])
         return {'cards': [weighted[1] for weighted in result],
                 'keepers': keepers}
 
@@ -523,7 +524,7 @@ class Partie:
         self.final_score = 0
 
     def new_deal(self):
-        if len(self.deals) == 0 or len(self.deals) % 2 == 0:
+        if not self.deals or len(self.deals) % 2 == 0:
             d = Deal(self, self.non_dealer, self.dealer)
         elif len(self.deals) % 2 == 1:
             d = Deal(self, self.dealer, self.non_dealer)

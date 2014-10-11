@@ -79,7 +79,7 @@ class Server:
         for category in Category.categories:
             result = winners[category]
             winning_declaration = result.get('winner')
-            if winning_declaration:
+            if winning_declaration.first:
                 self.announce("{winner} wins {category} with {score}.".format(winner=winning_declaration.result.player,
                                                                               category=category,
                                                                               score=winning_declaration.all_results))

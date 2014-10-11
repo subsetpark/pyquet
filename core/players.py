@@ -8,6 +8,17 @@ class HumanPlayer(Player):
 
     def get_cards(self, message, min=1, max=1):
         card_str = input("\n{}\nYour hand:\n{}\n".format(message, self.print_hand()))
+
+        # DEBUGGING PURPOSES
+        if card_str == 'DEBUG':
+            if not self.deal.elder.__class__ == HumanPlayer:
+                print("{}:\n{}".format(self.deal.elder, self.deal.elder.print_hand()))
+            else:
+                print("{}:\n{}".format(self.deal.younger, self.deal.younger.print_hand()))
+
+        if not card_str:
+            return []
+
         cards = [string.upper() for string in card_str.split()]
 
         if len(cards) > max:
@@ -25,7 +36,7 @@ class HumanPlayer(Player):
         try:
             return [self.hand[chars] for chars in cards]
         except KeyError:
-            return self.get_cards(message, max)
+            return self.get_cards(message, min, max)
 
     def get_elder_exchange(self):
         return self.get_cards('{}, please exchange up to five cards.'.format(self), min=0, max=5)
@@ -35,15 +46,19 @@ class HumanPlayer(Player):
 
     def get_good(self, declaration):
         # This can be where you can sink eventually
-        return super().get_good()
+        return super().get_good(declaration)
 
     def get_lead(self):
         return self.get_cards('\n{}, please lead.'.format(self))[0]
 
     def get_follow(self, lead_card):
         card = self.get_cards('{}, play {}.'.format(self, lead_card.suit))[0]
+        
         if card.suit != lead_card.suit and [card for card in self.hand.values() if card.suit == lead_card.suit]:
-            raise ValueError("You must play {}".format(lead_card))
+            self.announce("You must play {}".format(lead_card))
+            return self.get_follow(lead_card)
+
+        return card
 
     def draw(self, cards):
         for card in cards:
