@@ -166,7 +166,7 @@ class Result:
 
         candidate_scores = SCORE_VALUES[category].keys()
         losing_scores = [score for score in candidate_scores if score < self.first]
-        self.strength = len(losing_scores) / len(candidate_scores) if losing_scores else 0
+        self.strength = len(losing_scores) / (len(candidate_scores) - 1) if losing_scores else 0
 
         self.point_suit = point_suit
 
@@ -280,15 +280,40 @@ class Player:
         return suits
 
     def evaluate_hand(self):
-        scored_cards = []
+        scored_cards = {}
+        keepers = []
+        # Score for position in declarations
         for card in self.hand.values():
             score = 0
             for category in Category.categories:
                 result = self.declare(category)
                 if result.find_card(card):
                     score += result.value * result.strength
-            scored_cards.append((score, card))
-        return sorted(scored_cards)
+            scored_cards[card] = score
+        
+        # Score for trick-taking ability
+        for suit in self.suits():
+            if not suit:
+                continue
+
+            suit.reverse()
+
+            if suit[0].rank == Rank.Ace: # Offensive ability
+                scored_cards[suit[0]] = scored_cards.get(suit[0], 0) + 1
+                for i, card in enumerate(suit):
+                    scored_cards[card] = scored_cards.get(card, 0) + 1
+                    if i == len(suit) - 1 or card - suit[i+1] != 1:
+                        break
+            else:                        # Defensive ability
+                distance = 14 - suit[0].rank.value
+                if len(suit) - 1 >= distance:
+                    for card in suit[:distance + 1]:
+                        scored_cards[card] = scored_cards.get(card, 0) + .5
+                        keepers.append(card)
+
+        result = [(score, card) for card, score in scored_cards.items()]
+        return {'cards': [weighted[1] for weighted in result],
+                'keepers': keepers}
 
     def declare(self, category):
         return getattr(self, category)
@@ -372,6 +397,22 @@ class Player:
         set_class = len(sets[0]) if sets else 0
         return Result(self, Category.SETS, set_class, sets)
 
+    def get_good(self, declaration):
+        my_score = self.declare(declaration.category)
+        if not declaration.second:
+            their_declaration = declaration.first
+            my_declaration = my_score.first
+        else:
+            their_declaration = declaration.second
+            my_declaration = my_score.second
+
+        if their_declaration > my_declaration:
+            good = Good.GOOD
+        elif their_declaration == my_declaration:
+            good = Good.EQUAL
+        else:
+            good = Good.NOT_GOOD
+        return good
 
 class Deal:
 

@@ -35,19 +35,7 @@ class HumanPlayer(Player):
 
     def get_good(self, declaration):
         # This can be where you can sink eventually
-        my_score = self.declare(declaration.category)
-        if not declaration.value:
-            detail = 'score'
-        else:
-            detail = 'value'
-
-        if getattr(declaration, detail) > getattr(my_score, detail):
-            good = Good.GOOD
-        elif getattr(declaration, detail) == getattr(my_score, detail):
-            good = Good.EQUAL
-        else:
-            good = Good.NOT_GOOD
-        return good
+        return super().get_good()
 
     def get_lead(self):
         return self.get_cards('\n{}, please lead.'.format(self))[0]
@@ -79,73 +67,24 @@ class Rabelais(Player):
     def announce(self, message):
         pass
 
-    def card_sort(self, cards):
-        return sorted(list(cards), key=lambda x: (x.suit, x.rank.value))
-
-    def get_elder_exchange(self):
-        low_ranks = {
-            Rank.Seven,
-            Rank.Eight,
-            Rank.Nine
-        }
-        suits = self.suits()
-
-        point_suit = suits[-1]
-
-        low_non_points = [card for card in self.hand.values() if card.rank in low_ranks and card not in point_suit]
-        if len(low_non_points) >= 5:
-            return self.card_sort(low_non_points)[:5]
-
-        sequence_cards = set([card for sequence in self.sequences.second for card in sequence])
-        set_cards = set([card for card_set in self.sets.second for card in card_set])
-        aces = set([card for card in self.hand.values() if card.rank == Rank.Ace])
-
-        undesirables = set(self.hand.values()) - (sequence_cards | set_cards | aces)
-
-        if len(undesirables) >= 5:
-            return self.card_sort(undesirables)[:5]
-
-        discards = set(low_non_points) | undesirables
-        return self.card_sort(discards)[:5]
+    def get_elder_exchange(self, max):
+        scored_cards = self.evaluate_hand()
+        return scored_cards['cards'][:5]
 
     def get_younger_exchange(self, max_cards):
-        keepers = set()
-        suits = self.suits()
-        for suit in suits:
-            if suit:
-                suit.sort(reverse=True)
-                distance = 14 - suit[0].rank.value
-                if len(suit) - 1 >= distance:
-                    keepers.update(suit[:distance + 1])
+        evaluation = self.evaluate_hand()
+        scored_cards = evaluation['cards']
+        keepers = evaluation['keepers']
 
-        weighted_score = sorted(Category.categories, key=lambda cat: -SCORE_VALUES[cat][self.declare(cat).first])[0]
+        for keeper in keepers:
+            for i, card in enumerate(scored_cards):
+                if card.rank == keeper.rank and card.suit == keeper.suit:
+                    del scored_cards[i]
 
-        if weighted_score in (Category.SETS, Category.SEQUENCES):
-            keepers.update([card for group in getattr(self, weighted_score).second for card in group])
-        else:
-            keepers.update(suits[-1])
-
-        remainder = set(self.hand.values()) - keepers
-
-        return sorted(list(remainder), key=lambda x: x.rank.value)[:max_cards]
+        return scored_cards[:max_cards]
 
     def get_declaration(self, category, detail=False):
         return Declaration(self.declare(category), detail)
-
-    def get_good(self, declaration):
-        my_score = self.declare(declaration.category)
-        if not declaration.second:
-            detail = 'first'
-        else:
-            detail = 'second'
-
-        if getattr(declaration, detail) > getattr(my_score, detail):
-            good = Good.GOOD
-        elif getattr(declaration, detail) == getattr(my_score, detail):
-            good = Good.EQUAL
-        else:
-            good = Good.NOT_GOOD
-        return good
 
     def get_lead(self):
         return self.suits()[-1][-1]
