@@ -4,10 +4,11 @@ from core.server import Server, Rabelais, Partie
 class Viewer(Rabelais):
 
     def announce(self, message):
+        super().announce(message)
         print(message)
 
-    def register(self, player, card, silent=False):
-        self.seen_cards[card.hash()] = card
+    def register(self, player, card, **kwargs):
+        super().register(player, card, **kwargs)
         print('{} plays {}.'.format(player, card))
 
 

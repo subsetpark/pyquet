@@ -17,9 +17,9 @@ class Server:
         for player in self.players:
             player.announce(message)
 
-    def register(self, player, card):
+    def register(self, *args, **kwargs):
         for recipient in self.players:
-            recipient.register(player, card)
+            recipient.register(*args, **kwargs)
 
     def exchange(self, deal):
         elder, younger = deal.elder, deal.younger
@@ -99,7 +99,7 @@ class Server:
             lead_card = lead.get_lead()
             self.register(lead, lead_card)
             follow_card = follow.get_follow(lead_card)
-            self.register(follow, follow_card)
+            self.register(follow, follow_card, lead=lead_card)
 
             lead_play = {'player': lead, 'card': lead_card}
             follow_play = {'player': follow, 'card': follow_card}

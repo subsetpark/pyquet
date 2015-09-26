@@ -1,4 +1,5 @@
-from core.game import Good, Rank, Player, Category, Deck, all_cards, Declaration, SCORE_VALUES, Card
+from core.game import Good, Rank, Player, Category, Deck, all_cards, Declaration, SCORE_VALUES, Card, Suit
+from random import choice
 
 
 class HumanPlayer(Player):
@@ -65,7 +66,7 @@ class HumanPlayer(Player):
         for card in cards:
             self.hand[card.hash()] = card
 
-    def register(self, player, card, silent=False):
+    def register(self, player, card, silent=False, lead=None):
         if not silent:
             self.announce('{} plays {}.'.format(player, card))
 
@@ -74,11 +75,12 @@ class Rabelais(Player):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.seen_cards = {}
+        self.reset()
 
     def reset(self):
         super().reset()
         self.seen_cards = {}
+        self.opponent_is_out = {suit: False for suit in Suit.suits}
 
     def announce(self, message):
         pass
@@ -137,6 +139,7 @@ class Rabelais(Player):
         return scored_cards[:max_cards]
 
     def get_lead(self):
+        lead = None
         safe_cards = {}
         high_card = None
         for suit_cards in self.suits():
@@ -161,9 +164,19 @@ class Rabelais(Player):
         if safe_cards:
             high_card = max(safe_cards.values(), key=lambda d: (d['run'], d['card']))['card']
         if high_card:
-            return self.hand[high_card.hash()]
-        else:
-            return self.suits()[-1][0]
+            lead =  self.hand[high_card.hash()]
+        
+        elif True in self.opponent_is_out.values():
+            for suit_cards in self.suits():
+                if suit_cards:
+                    suit = suit_cards[0].suit
+                    if self.opponent_is_out[suit]:
+                        lead = suit_cards[0]
+        
+        if not lead:
+            lead = choice(list(self.hand.values()))
+
+        return lead
 
     def get_follow(self, lead_card):
         follow_suit = self.get_suit(lead_card.suit)
@@ -181,5 +194,8 @@ class Rabelais(Player):
             self.hand[card.hash()] = card
             self.seen_cards[card.hash()] = card
 
-    def register(self, player, card, silent=True):
-        self.seen_cards[card.hash()] = card
+    def register(self, player, card, silent=True, lead=None):
+        if player != self:
+            self.seen_cards[card.hash()] = card
+            if lead and card.suit != lead.suit:
+                self.opponent_is_out[lead.suit] = True
